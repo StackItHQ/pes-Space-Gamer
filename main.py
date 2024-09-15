@@ -35,7 +35,7 @@ except:
 try:
     sh = gc.open(sheet)
 except gspread.SpreadsheetNotFound:
-    print(f"Spreadsheet {sheet} not found")
+    print(f"Spreadsheet {sheet} not found. Please ensure the spreadsheet exists and the service account has access to it")
     exit(1)
 
 # Connect to the database
@@ -53,7 +53,7 @@ except psycopg2.OperationalError:
 cur = conn.cursor()
 
 # Start syncronisation
-logging.info("Starting syncronisation")
+logger.info("Starting syncronisation")
 try:
     while True:
         # Do processing here
@@ -61,10 +61,10 @@ try:
         # Sleep for the update interval
         time.sleep(update_interval)
 except KeyboardInterrupt:
-    logging.info("Stopping syncronisation")
+    logger.info("Stopping syncronisation")
     conn.close()
     exit(0)
 except Exception as e:
-    logging.error(f"An error occured: {e}")
+    logger.error(f"An error occured: {e}")
     conn.close()
     exit(1)
