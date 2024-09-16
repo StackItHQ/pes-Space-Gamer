@@ -1,6 +1,7 @@
 import logging
 import time
 import traceback
+from datetime import datetime, timezone
 from os import getenv
 
 import gspread
@@ -55,8 +56,8 @@ except psycopg2.OperationalError:
 cur = conn.cursor()
 
 # Last updated time of the sheet
-last_sheet_update = 0
-last_db_update = 0
+last_sheet_update = sh_updated = datetime.strptime("1970-01-01 00:00:00", "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
+last_db_update = datetime.strptime("1970-01-01 00:00:00", "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
 
 def check_row(sh_row, db_row):
     if sh_row['First Name'] != db_row[1]:
@@ -75,7 +76,7 @@ try:
     while True:
         # Get the updated version of the sheet
         sh = gc.open(sheet)
-        sh_updated = sh.lastUpdateTime
+        sh_updated = max(datetime.strptime(sh.get_lastUpdateTime(), "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=timezone.utc), sh_updated)
         print("Sheet updated at: ", sh_updated)
 
         # Get the  updated version of the database
@@ -89,13 +90,14 @@ try:
             db_updated = max(db_updated, db_deleted)
         elif db_deleted:
             db_updated = db_deleted
+        db_updated = db_updated.replace(tzinfo=timezone.utc)
         print("Database updated at: ", db_updated)
 
-        if sh_updated != last_sheet_update and last_db_update == db_updated:    # If only the sheet has been updated since the last update
+        if sh_updated > last_sheet_update and last_db_update >= db_updated:    # If only the sheet has been updated since the last update
             logger.info("Sheet has been updated")
             # Get the data from the sheet and the database
-            sh_data = sh.sheet1.get_all_records()[1:]
-            db_data = cur.execute("SELECT * FROM candidates")
+            sh_data = sh.sheet1.get_all_records()
+            db_data = cur.execute("SELECT * FROM candidates order by id")
             db_data = cur.fetchall()
             
             for i,row in enumerate(sh_data):
@@ -109,12 +111,15 @@ try:
             if len(sh_data) < len(db_data):
                 for i in range(len(sh_data), len(db_data)):
                     cur.execute("DELETE FROM candidates WHERE id = %s", (db_data[i]["id"],))
+                    cur.execute("DELETE FROM deleted_candidates WHERE id = %s", (db_data[i]["id"],))  # Delete the row from the deleted_candidates table
             conn.commit()
-        elif sh_updated == last_sheet_update and last_db_update != db_updated:  # If only the database has been updated since the last update
+            db_updated = datetime.now(timezone.utc)
+
+        elif sh_updated <= last_sheet_update and last_db_update < db_updated:  # If only the database has been updated since the last update
             logger.info("Database has been updated")
             # Get the data from the sheet and the database
-            sh_data = sh.sheet1.get_all_records()[1:]
-            db_data = cur.execute("SELECT * FROM candidates")
+            sh_data = sh.sheet1.get_all_records()
+            db_data = cur.execute("SELECT * FROM candidates order by id")
             db_data = cur.fetchall()
 
             min_len = min(len(sh_data), len(db_data))
@@ -124,12 +129,13 @@ try:
                 sh.sheet1.insert_rows([[row[1], row[2], row[3], row[4]] for row in db_data[min_len:]], min_len+2)
             elif len(sh_data) > len(db_data):
                 sh.sheet1.delete_rows(len(db_data)+2, len(sh_data)-len(db_data))
+            db_updated = datetime.now(timezone.utc)
 
-        elif sh_updated != last_sheet_update and last_db_update != db_updated:  # If both the sheet and the database have been updated since the last update
+        elif sh_updated > last_sheet_update and last_db_update < db_updated:  # If both the sheet and the database have been updated since the last update
             logger.info("Sheet and database have been updated")
             if conflict_priority == "Sheet":
-                sh_data = sh.sheet1.get_all_records()[1:]
-                db_data = cur.execute("SELECT * FROM candidates")
+                sh_data = sh.sheet1.get_all_records()
+                db_data = cur.execute("SELECT * FROM candidates order by id")
                 db_data = cur.fetchall()
 
                 for i,row in enumerate(sh_data):
@@ -143,11 +149,12 @@ try:
                 if len(sh_data) < len(db_data):
                     for i in range(len(sh_data), len(db_data)):
                         cur.execute("DELETE FROM candidates WHERE id = %s", (db_data[i]["id"],))
+                        cur.execute("DELETE FROM deleted_candidates WHERE id = %s", (db_data[i]["id"],))  # Delete the row from the deleted_candidates table
                 conn.commit()
 
             else:
-                sh_data = sh.sheet1.get_all_records()[1:]
-                db_data = cur.execute("SELECT * FROM candidates")
+                sh_data = sh.sheet1.get_all_records()
+                db_data = cur.execute("SELECT * FROM candidates order by id")
                 db_data = cur.fetchall()
 
                 min_len = min(len(sh_data), len(db_data))
@@ -157,6 +164,9 @@ try:
                     sh.sheet1.insert_rows([[row[1], row[2], row[3], row[4]] for row in db_data[min_len:]], min_len+2)
                 elif len(sh_data) > len(db_data):
                     sh.sheet1.delete_rows(len(db_data)+2, len(sh_data)-len(db_data))
+            
+            db_updated = datetime.now(timezone.utc)
+            sh_updated = db_updated
             
         else:                                                                   # No updates
             pass
