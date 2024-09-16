@@ -1,3 +1,5 @@
+
+https://github.com/user-attachments/assets/2dec6755-1453-4a09-8f06-eac6295f4498
 [![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/AHFn7Vbn)
 # Superjoin Hiring Assignment
 
@@ -46,10 +48,10 @@ Once you're done, make sure you **record a video** showing your project working.
 We have a checklist at the bottom of this README file, which you should update as your progress with your assignment. It will help us evaluate your project.
 
 - [x] My code's working just fine! 🥳
-- [ ] I have recorded a video showing it working and embedded it in the README ▶️
+- [x] I have recorded a video showing it working and embedded it in the README ▶️
 - [x] I have tested all the normal working cases 😎
 - [x] I have even solved some edge cases (brownie points) 💪
-- [ ] I added my very planned-out approach to the problem at the end of this README 📜
+- [x] I added my very planned-out approach to the problem at the end of this README 📜
 
 ## Got Questions❓
 Feel free to check the discussions tab, you might get some help there. Check out that tab before reaching out to us. Also, did you know, the internet is a great place to explore? 😛
@@ -59,4 +61,32 @@ We're available at techhiring@superjoin.ai for all queries.
 All the best ✨.
 
 ## Developer's Section
-*Add your video here, and your approach to the problem (optional). Leave some comments for us here if you want, we will be reading this :)*
+
+
+https://github.com/user-attachments/assets/dbb5feca-342d-4cfa-b13f-9a0e2e2c1b6b
+
+### Approach
+1. Environment Setup:
+   - Load environment variables from a .env file.
+2. Set up logging to track synchronization activities and errors.
+3. Google Sheets Connection:
+   - Connect to the Google Sheets API using a service account.
+   - Open the specified Google Sheet.
+4. Database Connection:
+   - Connect to the PostgreSQL database using psycopg2.
+5. Synchronization Logic:
+   - Continuously monitor both the Google Sheet and the database for updates.
+   - Compare the last updated timestamps of both the Google Sheet and the database.
+   - Depending on which data source has been updated, synchronize the other:
+   - If the Google Sheet has been updated, update the database with the new data.
+   - If the database has been updated, update the Google Sheet with the new data.
+   - If both have been updated, resolve conflicts based on a predefined priority (e.g., prioritize Google Sheet updates).
+6. Error Handling:
+   - Handle exceptions and log errors.
+   - Gracefully close database connections on errors or interruptions.
+7. Triggers and Metadata:
+   - Use database triggers to maintain metadata and handle deletions.
+   - Ensure that deleted records are moved to a metadata table for tracking.
+8. Periodic Updates:
+   - Use a loop with a sleep interval to periodically check for updates and synchronize data.
+
