@@ -1,0 +1,14 @@
+# Virtual Environment
+venv
+
+# Cache
+__pycache__
+
+# ENV files
+.env
+
+# Logs
+*.log
+
+# Credentials
+service_account.json
