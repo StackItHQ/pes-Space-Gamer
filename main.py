@@ -110,8 +110,8 @@ try:
                                 (row["First Name"], row["Last Name"], row["Email"], row["Phone Number"], sh_updated))
             if len(sh_data) < len(db_data):
                 for i in range(len(sh_data), len(db_data)):
-                    cur.execute("DELETE FROM candidates WHERE id = %s", (db_data[i]["id"],))
-                    cur.execute("DELETE FROM deleted_candidates WHERE id = %s", (db_data[i]["id"],))  # Delete the row from the deleted_candidates table
+                    cur.execute("DELETE FROM candidates WHERE id = %s", (db_data[i][0],))
+                    cur.execute("DELETE FROM deleted_candidates WHERE id = %s", (db_data[i][0],))  # Delete the row from the deleted_candidates table
             conn.commit()
             db_updated = datetime.now(timezone.utc)
 
@@ -148,8 +148,8 @@ try:
                                     (row["First Name"], row["Last Name"], row["Email"], row["Phone Number"], sh_updated))
                 if len(sh_data) < len(db_data):
                     for i in range(len(sh_data), len(db_data)):
-                        cur.execute("DELETE FROM candidates WHERE id = %s", (db_data[i]["id"],))
-                        cur.execute("DELETE FROM deleted_candidates WHERE id = %s", (db_data[i]["id"],))  # Delete the row from the deleted_candidates table
+                        cur.execute("DELETE FROM candidates WHERE id = %s", (db_data[i][0],))
+                        cur.execute("DELETE FROM deleted_candidates WHERE id = %s", (db_data[i][0],))  # Delete the row from the deleted_candidates table
                 conn.commit()
 
             else:
